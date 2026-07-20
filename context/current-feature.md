@@ -9,8 +9,9 @@ Pomodoro MVP with optional local music concentration playlist
 MVP0–MVP5 complete. The original YouTube Concentration Player (MVP4) was
 replaced post-MVP5 with a Local Music Player after the YouTube embed proved
 non-functional on real hardware, not just the sandbox — see History for the
-full diagnosis and the pivot. Windows verification remains an open
-follow-up.
+full diagnosis and the pivot. A Linux `.deb` package is now available
+(`packaging/build_deb.sh`); Windows packaging and general Windows
+verification remain open follow-ups.
 
 ## MVP Roadmap
 
@@ -268,3 +269,40 @@ Implement the smallest useful cross-platform desktop application.
   in tests. 84 automated tests pass; `ruff check` and `ruff format --check`
   pass. Windows MCI playback path remains unverified on a real Windows
   machine, same open follow-up as the rest of the Windows-specific code.
+- **Linux `.deb` packaging added.** The app previously only ran via
+  `python -m src.main` from an activated venv — not click-to-launch, and
+  packaging was already documented as a post-MVP step. Scope: `.deb`
+  only, no Windows `.exe` (the user has no Windows machine to build/test
+  one on, and PyInstaller can't reliably cross-compile a Windows binary
+  from Linux). Added `packaging/focus-timer.spec` (PyInstaller `--onedir`
+  build — faster launch than `--onefile`, no per-run unpack to a temp
+  dir), `packaging/build_deb.sh` (assembles a `/opt/focus-timer` +
+  `/usr/bin` symlink + `.desktop` entry + icon layout, then
+  `dpkg-deb --build`), `packaging/focus-timer.desktop`, and
+  `packaging/icon.png` (the user's provided `pomodoro.png`, resized from
+  1254×1254 to the standard 256×256). Added a top-level `VERSION` file
+  (`0.1.0`) as the single source of truth for both the PyInstaller build
+  and the Debian control file. Along the way, found and fixed a real
+  bundling bug: `AudioPlayer.DEFAULT_ALARM_PATH` and `main.py`'s
+  `STYLES_PATH` both derived their location from `Path(__file__)`, which
+  doesn't reliably resolve the same way once bundled — made both
+  frozen-aware (`sys._MEIPASS` when `sys.frozen`, unchanged behavior
+  otherwise) and added `alarm.wav`/`styles.qss` to the PyInstaller
+  `datas`. Verified by actually running the built binary directly out of
+  `dist/focus-timer/` (not just inspecting `dpkg-deb --contents`) against
+  the user's real desktop — dark theme rendered correctly, and the music
+  player picked up the user's real `~/Music` folder and played a real
+  track. **Note on verification method:** discovered mid-session that
+  `DISPLAY=:0` in this environment is the user's actual live desktop, not
+  an isolated sandbox as earlier assumed (explains why the MVP4 YouTube
+  codec issue reproduced identically for the user, rather than being
+  sandbox-specific as first concluded) — a full-screen screenshot taken
+  during this verification was deleted immediately since it captured more
+  of the user's screen than intended; window-only or log-based
+  verification is used from here on. Did not run `sudo dpkg -i` on the
+  user's real system — they explicitly asked to install it themselves.
+  Deliverable: `dist/focus-timer_0.1.0_amd64.deb` (not committed to git;
+  `dist/`, `build/` and `packaging/staging/` are gitignored — only the
+  packaging *source* is tracked, so the build is reproducible via
+  `bash packaging/build_deb.sh`). Added top-level `README.md` (didn't
+  exist before) covering install and running from source.

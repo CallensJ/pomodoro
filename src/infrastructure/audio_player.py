@@ -9,11 +9,17 @@ import logging
 import platform
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_ALARM_PATH = Path(__file__).resolve().parent.parent / "assets" / "alarm.wav"
+if getattr(sys, "frozen", False):
+    _SRC_DIR = Path(sys._MEIPASS) / "src"
+else:
+    _SRC_DIR = Path(__file__).resolve().parent.parent
+
+DEFAULT_ALARM_PATH = _SRC_DIR / "assets" / "alarm.wav"
 
 
 class AudioPlayer:

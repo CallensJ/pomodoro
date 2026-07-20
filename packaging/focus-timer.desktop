@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Focus Timer
+Comment=A compact Pomodoro desktop widget with local concentration music
+Exec=/usr/bin/focus-timer
+Icon=focus-timer
+Terminal=false
+Categories=Utility;

@@ -12,7 +12,12 @@ from src.infrastructure.notification_service import NotificationService
 from src.infrastructure.settings_store import SettingsStore
 from src.presentation.main_window import MainWindow
 
-STYLES_PATH = Path(__file__).parent / "presentation" / "styles.qss"
+if getattr(sys, "frozen", False):
+    _SRC_DIR = Path(sys._MEIPASS) / "src"
+else:
+    _SRC_DIR = Path(__file__).parent
+
+STYLES_PATH = _SRC_DIR / "presentation" / "styles.qss"
 
 
 def main() -> None:
