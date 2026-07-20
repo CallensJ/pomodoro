@@ -6,7 +6,7 @@ Pomodoro MVP with optional YouTube concentration playlist
 
 ## Status
 
-In Progress — MVP0 (Project Initialization) complete, ready for MVP1.
+In Progress — MVP1 (Domain Timer Core) complete, ready for MVP2.
 
 ## MVP Roadmap
 
@@ -15,7 +15,7 @@ checklist. Full checklists live in the approved plan; this section tracks
 status only.
 
 - [x] MVP0 — Project Initialization (`chore/project-init`)
-- [ ] MVP1 — Domain Timer Core (`feature/domain-timer`)
+- [x] MVP1 — Domain Timer Core (`feature/domain-timer`)
 - [ ] MVP2 — Application Shell + Working Timer UI (`feature/timer-shell`)
 - [ ] MVP3 — Alarm, Notifications, Settings Persistence (`feature/alarm-settings`)
 - [ ] MVP4 — YouTube Concentration Player (`feature/youtube-player`)
@@ -36,12 +36,12 @@ Implement the smallest useful cross-platform desktop application.
 
 ### Priority 2 — Timer
 
-- [ ] Implement `FOCUS`, `SHORT_BREAK` and `LONG_BREAK` phases
-- [ ] Use a monotonic deadline to avoid timer drift
-- [ ] Implement start, pause/resume, reset and skip
-- [ ] Increment the counter only after a completed focus session
-- [ ] Select a long break after four completed focus sessions
-- [ ] Add Space, R and S keyboard shortcuts
+- [x] Implement `FOCUS`, `SHORT_BREAK` and `LONG_BREAK` phases
+- [x] Use a monotonic deadline to avoid timer drift
+- [x] Implement start, pause/resume, reset and skip
+- [x] Increment the counter only after a completed focus session
+- [x] Select a long break after four completed focus sessions
+- [ ] Add Space, R and S keyboard shortcuts (deferred to MVP2, needs UI)
 
 ### Priority 3 — Alarm and Settings
 
@@ -105,3 +105,12 @@ Implement the smallest useful cross-platform desktop application.
   created, dependencies pinned to Python 3.14-compatible versions
   (PySide6 6.10.3) and installed, `ruff check`, `ruff format --check` and
   `pytest` all run clean
+- MVP1 complete: `src/domain/timer_state.py` (`Phase`, `TimerStatus`,
+  `EndAction`, `CycleConfig` with a `classic()` preset) and
+  `src/domain/timer.py` (`PomodoroTimer`, pure Python, injectable monotonic
+  clock, no Qt) implement all ten documented timer rules for both Classic
+  and Custom cycles. 16 unit tests cover start/pause/resume accuracy,
+  session counting, classic long-break-then-repeat behavior, all three
+  custom end actions (stop, long break, repeat), reset, skip semantics and
+  invalid-config validation. `pytest`, `ruff check` and `ruff format --check`
+  all pass
