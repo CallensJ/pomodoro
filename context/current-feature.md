@@ -6,7 +6,7 @@ Pomodoro MVP with optional YouTube concentration playlist
 
 ## Status
 
-In Progress — MVP1 (Domain Timer Core) complete, ready for MVP2.
+In Progress — MVP2 (Application Shell + Working Timer UI) complete, ready for MVP3.
 
 ## MVP Roadmap
 
@@ -16,7 +16,7 @@ status only.
 
 - [x] MVP0 — Project Initialization (`chore/project-init`)
 - [x] MVP1 — Domain Timer Core (`feature/domain-timer`)
-- [ ] MVP2 — Application Shell + Working Timer UI (`feature/timer-shell`)
+- [x] MVP2 — Application Shell + Working Timer UI (`feature/timer-shell`)
 - [ ] MVP3 — Alarm, Notifications, Settings Persistence (`feature/alarm-settings`)
 - [ ] MVP4 — YouTube Concentration Player (`feature/youtube-player`)
 - [ ] MVP5 — Final Verification & Definition of Done (`chore/final-verification`)
@@ -28,11 +28,11 @@ Implement the smallest useful cross-platform desktop application.
 ### Priority 1 — Application Shell
 
 - [x] Create the documented project structure
-- [ ] Keep domain, application, infrastructure and presentation separated
-- [ ] Wire dependencies explicitly in `main.py`
+- [x] Keep domain, application, infrastructure and presentation separated
+- [x] Wire dependencies explicitly in `main.py`
 - [x] Add PySide6, PySide6-WebEngine, pytest, pytest-qt and Ruff dependencies
-- [ ] Create a compact dark main window
-- [ ] Display current phase, remaining time, task and session count
+- [x] Create a compact dark main window
+- [x] Display current phase, remaining time, task and session count
 
 ### Priority 2 — Timer
 
@@ -41,7 +41,7 @@ Implement the smallest useful cross-platform desktop application.
 - [x] Implement start, pause/resume, reset and skip
 - [x] Increment the counter only after a completed focus session
 - [x] Select a long break after four completed focus sessions
-- [ ] Add Space, R and S keyboard shortcuts (deferred to MVP2, needs UI)
+- [x] Add Space, R and S keyboard shortcuts
 
 ### Priority 3 — Alarm and Settings
 
@@ -114,3 +114,16 @@ Implement the smallest useful cross-platform desktop application.
   custom end actions (stop, long break, repeat), reset, skip semantics and
   invalid-config validation. `pytest`, `ruff check` and `ruff format --check`
   all pass
+- MVP2 complete: `src/application/timer_controller.py` (`TimerController`)
+  wires `PomodoroTimer` to a `QTimer` refresh loop and exposes
+  `phase_changed`/`status_changed`/`remaining_changed`/`session_changed`
+  signals; `src/presentation/main_window.py` (`MainWindow`) renders a
+  compact 340x430 dark window (`src/presentation/styles.qss`) with phase,
+  countdown, session counter, task input, start/pause/reset/skip controls,
+  and Space/R/S shortcuts guarded so typing in the task field never
+  triggers them; `src/main.py` wires the layers explicitly. Verified by
+  launching the real app (screenshots of idle and running states) and by
+  a `QTest`-driven script confirming all three shortcuts and the
+  focus-guard behavior. 24 automated tests (8 new) pass, including
+  pytest-qt controller and widget tests; `ruff check` and
+  `ruff format --check` pass
