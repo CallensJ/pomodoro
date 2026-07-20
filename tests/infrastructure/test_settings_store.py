@@ -78,13 +78,13 @@ def test_boolean_preferences_round_trip(tmp_path) -> None:
     assert store.always_on_top() is True
 
 
-def test_last_youtube_url_defaults_to_empty_string(tmp_path) -> None:
+def test_last_music_folder_defaults_to_empty_string(tmp_path) -> None:
     store = make_store(tmp_path)
-    assert store.last_youtube_url() == ""
+    assert store.last_music_folder() == ""
 
 
-def test_last_youtube_url_round_trips(tmp_path) -> None:
+def test_last_music_folder_round_trips(tmp_path) -> None:
     store = make_store(tmp_path)
-    store.set_last_youtube_url("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    store.set_last_music_folder("/home/user/Music")
 
-    assert store.last_youtube_url() == "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    assert store.last_music_folder() == "/home/user/Music"

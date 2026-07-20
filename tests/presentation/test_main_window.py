@@ -59,8 +59,8 @@ def test_player_plays_when_focus_starts_and_pauses_on_pause(qtbot, tmp_path) -> 
 
     play_calls = []
     pause_calls = []
-    window.youtube_player.play = lambda: play_calls.append(True)
-    window.youtube_player.pause = lambda: pause_calls.append(True)
+    window.music_player.play = lambda: play_calls.append(True)
+    window.music_player.pause = lambda: pause_calls.append(True)
 
     controller.start()
     assert len(play_calls) >= 1
@@ -70,23 +70,31 @@ def test_player_plays_when_focus_starts_and_pauses_on_pause(qtbot, tmp_path) -> 
     assert len(pause_calls) >= 1
 
 
-def test_player_url_is_persisted_to_settings_on_load(qtbot, tmp_path) -> None:
+def test_player_folder_is_persisted_to_settings_on_load(qtbot, tmp_path) -> None:
     store = make_settings_store(tmp_path)
     controller = TimerController(PomodoroTimer(CycleConfig.classic()))
     window = MainWindow(controller, store)
     qtbot.addWidget(window)
 
-    window.youtube_player.load("https://youtu.be/dQw4w9WgXcQ")
+    music_folder = tmp_path / "music"
+    music_folder.mkdir()
+    (music_folder / "track.mp3").write_bytes(b"")
 
-    assert store.last_youtube_url() == "https://youtu.be/dQw4w9WgXcQ"
+    window.music_player.load_folder(str(music_folder))
+
+    assert store.last_music_folder() == str(music_folder)
 
 
-def test_stored_youtube_url_is_loaded_on_startup(qtbot, tmp_path) -> None:
+def test_stored_music_folder_is_loaded_on_startup(qtbot, tmp_path) -> None:
     store = make_settings_store(tmp_path)
-    store.set_last_youtube_url("https://youtu.be/dQw4w9WgXcQ")
+    music_folder = tmp_path / "music"
+    music_folder.mkdir()
+    (music_folder / "track.mp3").write_bytes(b"")
+    store.set_last_music_folder(str(music_folder))
+
     controller = TimerController(PomodoroTimer(CycleConfig.classic()))
     window = MainWindow(controller, store)
     qtbot.addWidget(window)
 
-    assert window.youtube_player.url_input.text() == "https://youtu.be/dQw4w9WgXcQ"
-    assert window.youtube_player.content.isHidden() is False
+    assert window.music_player.folder_label.text() == str(music_folder)
+    assert window.music_player.content.isHidden() is False

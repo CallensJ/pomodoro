@@ -90,8 +90,8 @@ class SettingsStore:
     def set_always_on_top(self, enabled: bool) -> None:
         self._settings.setValue("behavior/always_on_top", enabled)
 
-    def last_youtube_url(self) -> str:
-        return str(self._settings.value("youtube/last_url", ""))
+    def last_music_folder(self) -> str:
+        return str(self._settings.value("music/last_folder", ""))
 
-    def set_last_youtube_url(self, url: str) -> None:
-        self._settings.setValue("youtube/last_url", url)
+    def set_last_music_folder(self, folder: str) -> None:
+        self._settings.setValue("music/last_folder", folder)

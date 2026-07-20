@@ -2,12 +2,15 @@
 
 ## Feature Name
 
-Pomodoro MVP with optional YouTube concentration playlist
+Pomodoro MVP with optional local music concentration playlist
 
 ## Status
 
-MVP5 complete. MVP scope (MVP0–MVP5) fully implemented and verified on
-Linux; Windows verification remains an open follow-up (see History).
+MVP0–MVP5 complete. The original YouTube Concentration Player (MVP4) was
+replaced post-MVP5 with a Local Music Player after the YouTube embed proved
+non-functional on real hardware, not just the sandbox — see History for the
+full diagnosis and the pivot. Windows verification remains an open
+follow-up.
 
 ## MVP Roadmap
 
@@ -51,16 +54,19 @@ Implement the smallest useful cross-platform desktop application.
 - [x] Store durations and preferences with `QSettings`
 - [x] Add alarm, auto-start and always-on-top options
 
-### Priority 4 — YouTube Player
+### Priority 4 — Local Music Player
 
-- [x] Add a field for a YouTube video or playlist URL
-- [x] Validate and convert supported URLs to official embed URLs
-- [x] Load the result in a collapsible `QWebEngineView`
-- [x] Start/resume playback for focus sessions when permitted
+- [x] Let the user choose a local folder as the concentration playlist
+- [x] Scan the folder (non-recursive) for `.mp3` files
+- [x] Play back via a non-blocking OS-native player (not QtMultimedia)
+- [x] Start/resume playback for focus sessions
 - [x] Pause playback when the timer pauses or a break starts
-- [x] Preserve manual player controls
-- [x] Handle offline, invalid and embedding-disabled cases without crashing
-- [x] Save the last valid URL
+- [x] Auto-advance on natural track completion (wrapping after the last
+      track), plus a manual Next control
+- [x] Preserve manual player controls (collapsible, Play/Pause/Next)
+- [x] Handle "no mp3 files" and "no audio player installed" cases without
+      crashing
+- [x] Save the last selected folder
 
 ### Priority 5 — Verification
 
@@ -78,22 +84,25 @@ Implement the smallest useful cross-platform desktop application.
 - A user can complete a full Pomodoro cycle without reopening the app
 - Pause/resume does not lose or add time
 - Reset and skip follow the documented timer rules
-- Alarm or YouTube failure never stops timer operation
-- Valid video and playlist URLs open in the embedded player
-- Music stops during pauses and breaks where the player API allows it
-- Invalid URLs display a clear error
+- Alarm or music playback failure never stops timer operation
+- A chosen folder's `.mp3` files play back through the player
+- Music pauses during timer pauses and breaks, resumes on focus
+- A folder with no mp3 files, or no supported player installed, displays a
+  clear error
 - Preferences survive restart
-- Domain rules remain independent from widgets, audio, settings and YouTube
+- Domain rules remain independent from widgets, audio, settings and the
+  music player
 - No handwritten Python module exceeds 300 lines without documented justification
 
 ## Notes
 
 - Packaging with PyInstaller is a separate feature after MVP validation.
-- `QtWebEngine` increases installation and executable size substantially.
-- YouTube autoplay may require one initial user interaction.
-- Some videos and playlists cannot be embedded due to owner or regional rules.
-- If automated playback is unreliable, keep the embedded manual controls and
-  record player automation as deferred rather than delaying the timer MVP.
+- The music player relies on an external OS player (`ffplay`/`cvlc` on
+  Linux) being installed; if none is found, the app shows a clear inline
+  message and the timer keeps working normally.
+- `PySide6-Addons` (QtWebEngine/QtMultimedia) is no longer a dependency —
+  dropped when the YouTube player was replaced, shrinking the install
+  significantly.
 
 ## History
 
@@ -218,3 +227,44 @@ Implement the smallest useful cross-platform desktop application.
   `ruff format --check` pass. Windows launch/behavior remains unverified
   (no Windows environment available in this sandbox) — flagged as a
   follow-up for the user to confirm on a real Windows machine.
+- **YouTube player replaced with a Local Music Player.** The user tested
+  the app on their own real desktop and hit the same "Error 152/153: Video
+  player configuration error" I'd seen in the sandbox — meaning it was not
+  a sandbox artifact as I'd concluded in the MVP4 entry above. Re-diagnosed
+  from scratch: queried the bundled Chromium's actual codec support via
+  `canPlayType()` and found **H.264 and AAC are unsupported**, while
+  VP9/VP8/Opus/AV1 all work — PySide6's official pip wheels ship
+  QtWebEngine without the patent-licensed codecs. Confirmed this is
+  specific to YouTube's embedded `/embed/` player (which doesn't fall back
+  to VP9) by loading the regular `youtube.com/watch` page in the same
+  browser, which rendered without error. This is a dependency/licensing
+  limitation, not fixable in app code. The user asked to replace YouTube
+  entirely with a local-folder MP3 player. While investigating the
+  replacement, found `QMediaPlayer`/`QAudioOutput` (QtMultimedia) hang
+  identically to the `QSoundEffect` bug fixed in MVP5 — QtMultimedia is
+  unreliable on this audio stack entirely, confirmed by direct test.
+  Removed `youtube_url.py`/`youtube_player.py` and their tests; added
+  `src/infrastructure/music_library.py` (pure `scan_mp3_files()`, non-
+  recursive, sorted) and `src/infrastructure/local_music_player.py`
+  (`LocalMusicPlayer`, non-blocking OS-native playback — `QProcess`
+  running `ffplay`/`cvlc` on Linux, paused/resumed via `SIGSTOP`/`SIGCONT`
+  on the process PID, verified live that a suspended process survives and
+  resumes cleanly; Windows uses `ctypes` + `winmm.dll` MCI commands with a
+  1s poll for natural-completion detection — untestable here, structure
+  verified via mocked unit tests only). Added
+  `src/presentation/music_player_widget.py` (`MusicPlayerWidget`,
+  collapsible, folder picker, Play/Pause/Next, auto-advance with wrap,
+  inline errors) replacing `YoutubePlayerWidget` with the same public
+  shape `MainWindow` already wires to (`play()`/`pause()`,
+  `collapsed_changed`). `SettingsStore.last_youtube_url()` replaced with
+  `last_music_folder()`. Dropped `PySide6-Addons` from `requirements.txt`
+  entirely (nothing uses QtWebEngine or QtMultimedia anymore) and verified
+  the app runs correctly with it uninstalled. Verified end-to-end with
+  real generated MP3s and the real app: folder scan, auto-play on focus
+  start, pause via `SIGSTOP` (confirmed via `ps` showing process state
+  `T`), resume via `SIGCONT` (state back to `S`), manual Next, natural
+  track-finish auto-advance with wrap-around, and folder persisted across
+  a real two-process restart — all observed directly, not just asserted
+  in tests. 84 automated tests pass; `ruff check` and `ruff format --check`
+  pass. Windows MCI playback path remains unverified on a real Windows
+  machine, same open follow-up as the rest of the Windows-specific code.
