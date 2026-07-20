@@ -34,7 +34,12 @@ class SettingsDialog(QDialog):
     def _build_ui(self) -> None:
         layout = QVBoxLayout(self)
         form = QFormLayout()
+        self._build_cycle_fields(form)
+        self._build_toggle_fields(form)
+        layout.addLayout(form)
+        self._build_actions(layout)
 
+    def _build_cycle_fields(self, form: QFormLayout) -> None:
         self.mode_combo = QComboBox()
         self.mode_combo.addItems(["Classic", "Custom"])
         self.mode_combo.currentIndexChanged.connect(self._update_field_states)
@@ -61,6 +66,7 @@ class SettingsDialog(QDialog):
         self.end_action_combo.addItems(END_ACTION_LABELS.values())
         form.addRow("End action", self.end_action_combo)
 
+    def _build_toggle_fields(self, form: QFormLayout) -> None:
         self.alarm_checkbox = QCheckBox("Play alarm sound")
         form.addRow(self.alarm_checkbox)
 
@@ -70,8 +76,7 @@ class SettingsDialog(QDialog):
         self.always_on_top_checkbox = QCheckBox("Keep window always on top")
         form.addRow(self.always_on_top_checkbox)
 
-        layout.addLayout(form)
-
+    def _build_actions(self, layout: QVBoxLayout) -> None:
         restore_button = QPushButton("Restore Classic Defaults")
         restore_button.clicked.connect(self._restore_classic_defaults)
         layout.addWidget(restore_button)

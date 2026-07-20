@@ -148,7 +148,7 @@ class YoutubePlayerWidget(QWidget):
         self.web_view.page().runJavaScript(PAUSE_JS)
 
 
-def _build_player_html(parsed: ParsedYoutubeUrl) -> str:
+def _build_player_config(parsed: ParsedYoutubeUrl) -> str:
     config = {
         "height": "100%",
         "width": "100%",
@@ -159,7 +159,11 @@ def _build_player_html(parsed: ParsedYoutubeUrl) -> str:
     if parsed.playlist_id:
         config["playerVars"]["list"] = parsed.playlist_id
         config["playerVars"]["listType"] = "playlist"
-    config_json = json.dumps(config)
+    return json.dumps(config)
+
+
+def _build_player_html(parsed: ParsedYoutubeUrl) -> str:
+    config_json = _build_player_config(parsed)
     return f"""<!DOCTYPE html>
 <html>
 <body style="margin:0;background:#000;">

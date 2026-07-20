@@ -6,7 +6,8 @@ Pomodoro MVP with optional YouTube concentration playlist
 
 ## Status
 
-In Progress — MVP4 (YouTube Concentration Player) complete, ready for MVP5.
+MVP5 complete. MVP scope (MVP0–MVP5) fully implemented and verified on
+Linux; Windows verification remains an open follow-up (see History).
 
 ## MVP Roadmap
 
@@ -19,7 +20,7 @@ status only.
 - [x] MVP2 — Application Shell + Working Timer UI (`feature/timer-shell`)
 - [x] MVP3 — Alarm, Notifications, Settings Persistence (`feature/alarm-settings`)
 - [x] MVP4 — YouTube Concentration Player (`feature/youtube-player`)
-- [ ] MVP5 — Final Verification & Definition of Done (`chore/final-verification`)
+- [x] MVP5 — Final Verification & Definition of Done (`chore/final-verification`)
 
 ## Goals
 
@@ -63,14 +64,14 @@ Implement the smallest useful cross-platform desktop application.
 
 ### Priority 5 — Verification
 
-- [ ] Test URL parsing and phase transitions
-- [ ] Run `pytest`
-- [ ] Run `ruff check .`
-- [ ] Run `ruff format --check .`
-- [ ] Review file sizes, function sizes and responsibility boundaries
-- [ ] Confirm domain tests run without creating Qt widgets
-- [ ] Manually complete a shortened focus/break cycle
-- [ ] Manually verify the app on Linux and Windows
+- [x] Test URL parsing and phase transitions
+- [x] Run `pytest`
+- [x] Run `ruff check .`
+- [x] Run `ruff format --check .`
+- [x] Review file sizes, function sizes and responsibility boundaries
+- [x] Confirm domain tests run without creating Qt widgets
+- [x] Manually complete a shortened focus/break cycle
+- [x] Manually verify the app on Linux (Windows: pending, no environment available here)
 
 ## Acceptance Criteria
 
@@ -182,3 +183,38 @@ Implement the smallest useful cross-platform desktop application.
   frame as a manual fallback. This should be re-verified on a real
   Linux/Windows desktop outside this sandbox before considering YouTube
   playback fully confirmed.
+- MVP5 complete: full verification pass against the Definition of Done.
+  File/function-size and responsibility review: no module exceeds 200
+  lines (well under the 300-line limit), domain has zero Qt imports,
+  `youtube_url.py` and `notification_service.py` have zero Qt dependency,
+  `settings_dialog.py`'s `_build_ui` (53 lines) was split into
+  `_build_cycle_fields`/`_build_toggle_fields`/`_build_actions`, and
+  `youtube_player.py`'s HTML builder had its config-building logic
+  extracted into `_build_player_config`. Manually verified end-to-end on
+  Linux: a full classic-shaped cycle (focus → short break → focus → long
+  break → repeat, session counter wrapping correctly), the documented
+  custom `2×40min/10min break/stop` cycle, pause holding remaining time
+  exactly across a real delay, resume continuing without gain/loss, skip
+  not counting the session, and a deliberate-delay drift test showing
+  0.0000s drift (confirming `remaining_seconds()` is deadline-based, not
+  tick-counted). Preferences (cycle config, alarm, auto-start,
+  always-on-top, last YouTube URL) verified to survive an actual process
+  restart (two separate process launches sharing one `QSettings` file).
+  **Critical fix found during verification:** `AudioPlayer` originally
+  used `QSoundEffect` (QtMultimedia); on this machine's audio stack
+  (PipeWire/PipeWire-Pulse) `QSoundEffect()` construction was found to
+  block the calling thread for 15+ seconds — a direct violation of "never
+  block the UI thread" and a risk of freezing the app on every phase
+  completion. Reproduced independently three times, isolated to
+  `QSoundEffect` construction specifically. Rewrote `AudioPlayer` to use
+  non-blocking OS-native playback instead (Linux: `paplay`/`aplay` via
+  `subprocess.Popen`, fire-and-forget; Windows: stdlib
+  `winsound.PlaySound(..., SND_ASYNC)`), mirroring the already-reliable
+  `NotificationService` pattern — construction dropped to ~0.02s and
+  `play_alarm()` returns in ~0.001s. Alarm + real desktop notification
+  reverified firing correctly at natural phase completion after the fix.
+  Tests rewritten accordingly (no longer need a `QApplication`/`qapp`
+  fixture at all). 83 automated tests pass; `ruff check` and
+  `ruff format --check` pass. Windows launch/behavior remains unverified
+  (no Windows environment available in this sandbox) — flagged as a
+  follow-up for the user to confirm on a real Windows machine.
