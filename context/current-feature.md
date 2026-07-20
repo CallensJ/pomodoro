@@ -1,0 +1,107 @@
+# Current Feature
+
+## Feature Name
+
+Pomodoro MVP with optional YouTube concentration playlist
+
+## Status
+
+In Progress — MVP0 (Project Initialization) complete, ready for MVP1.
+
+## MVP Roadmap
+
+Work is split into sequential MVPs, each gated by a success-criteria
+checklist. Full checklists live in the approved plan; this section tracks
+status only.
+
+- [x] MVP0 — Project Initialization (`chore/project-init`)
+- [ ] MVP1 — Domain Timer Core (`feature/domain-timer`)
+- [ ] MVP2 — Application Shell + Working Timer UI (`feature/timer-shell`)
+- [ ] MVP3 — Alarm, Notifications, Settings Persistence (`feature/alarm-settings`)
+- [ ] MVP4 — YouTube Concentration Player (`feature/youtube-player`)
+- [ ] MVP5 — Final Verification & Definition of Done (`chore/final-verification`)
+
+## Goals
+
+Implement the smallest useful cross-platform desktop application.
+
+### Priority 1 — Application Shell
+
+- [x] Create the documented project structure
+- [ ] Keep domain, application, infrastructure and presentation separated
+- [ ] Wire dependencies explicitly in `main.py`
+- [x] Add PySide6, PySide6-WebEngine, pytest, pytest-qt and Ruff dependencies
+- [ ] Create a compact dark main window
+- [ ] Display current phase, remaining time, task and session count
+
+### Priority 2 — Timer
+
+- [ ] Implement `FOCUS`, `SHORT_BREAK` and `LONG_BREAK` phases
+- [ ] Use a monotonic deadline to avoid timer drift
+- [ ] Implement start, pause/resume, reset and skip
+- [ ] Increment the counter only after a completed focus session
+- [ ] Select a long break after four completed focus sessions
+- [ ] Add Space, R and S keyboard shortcuts
+
+### Priority 3 — Alarm and Settings
+
+- [ ] Play a bundled local alarm when a phase ends
+- [ ] Attempt a desktop notification without blocking the timer
+- [ ] Store durations and preferences with `QSettings`
+- [ ] Add alarm, auto-start and always-on-top options
+
+### Priority 4 — YouTube Player
+
+- [ ] Add a field for a YouTube video or playlist URL
+- [ ] Validate and convert supported URLs to official embed URLs
+- [ ] Load the result in a collapsible `QWebEngineView`
+- [ ] Start/resume playback for focus sessions when permitted
+- [ ] Pause playback when the timer pauses or a break starts
+- [ ] Preserve manual player controls
+- [ ] Handle offline, invalid and embedding-disabled cases without crashing
+- [ ] Save the last valid URL
+
+### Priority 5 — Verification
+
+- [ ] Test URL parsing and phase transitions
+- [ ] Run `pytest`
+- [ ] Run `ruff check .`
+- [ ] Run `ruff format --check .`
+- [ ] Review file sizes, function sizes and responsibility boundaries
+- [ ] Confirm domain tests run without creating Qt widgets
+- [ ] Manually complete a shortened focus/break cycle
+- [ ] Manually verify the app on Linux and Windows
+
+## Acceptance Criteria
+
+- A user can complete a full Pomodoro cycle without reopening the app
+- Pause/resume does not lose or add time
+- Reset and skip follow the documented timer rules
+- Alarm or YouTube failure never stops timer operation
+- Valid video and playlist URLs open in the embedded player
+- Music stops during pauses and breaks where the player API allows it
+- Invalid URLs display a clear error
+- Preferences survive restart
+- Domain rules remain independent from widgets, audio, settings and YouTube
+- No handwritten Python module exceeds 300 lines without documented justification
+
+## Notes
+
+- Packaging with PyInstaller is a separate feature after MVP validation.
+- `QtWebEngine` increases installation and executable size substantially.
+- YouTube autoplay may require one initial user interaction.
+- Some videos and playlists cannot be embedded due to owner or regional rules.
+- If automated playback is unreliable, keep the embedded manual controls and
+  record player automation as deferred rather than delaying the timer MVP.
+
+## History
+
+- Project documentation initialized
+- MVP scope defined
+- YouTube playlist support added to the specification
+- Agile MVP roadmap (MVP0–MVP5) planned and approved
+- MVP0 complete: git repo initialized, remote `origin` set to
+  `https://github.com/CallensJ/pomodoro.git`, documented folder structure
+  created, dependencies pinned to Python 3.14-compatible versions
+  (PySide6 6.10.3) and installed, `ruff check`, `ruff format --check` and
+  `pytest` all run clean
