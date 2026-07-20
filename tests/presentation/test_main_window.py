@@ -50,3 +50,43 @@ def test_main_window_applies_always_on_top_from_settings(qtbot, tmp_path) -> Non
     qtbot.addWidget(window)
 
     assert bool(window.windowFlags() & Qt.WindowType.WindowStaysOnTopHint)
+
+
+def test_player_plays_when_focus_starts_and_pauses_on_pause(qtbot, tmp_path) -> None:
+    controller = TimerController(PomodoroTimer(CycleConfig.classic()))
+    window = MainWindow(controller, make_settings_store(tmp_path))
+    qtbot.addWidget(window)
+
+    play_calls = []
+    pause_calls = []
+    window.youtube_player.play = lambda: play_calls.append(True)
+    window.youtube_player.pause = lambda: pause_calls.append(True)
+
+    controller.start()
+    assert len(play_calls) >= 1
+    assert len(pause_calls) == 0
+
+    controller.pause()
+    assert len(pause_calls) >= 1
+
+
+def test_player_url_is_persisted_to_settings_on_load(qtbot, tmp_path) -> None:
+    store = make_settings_store(tmp_path)
+    controller = TimerController(PomodoroTimer(CycleConfig.classic()))
+    window = MainWindow(controller, store)
+    qtbot.addWidget(window)
+
+    window.youtube_player.load("https://youtu.be/dQw4w9WgXcQ")
+
+    assert store.last_youtube_url() == "https://youtu.be/dQw4w9WgXcQ"
+
+
+def test_stored_youtube_url_is_loaded_on_startup(qtbot, tmp_path) -> None:
+    store = make_settings_store(tmp_path)
+    store.set_last_youtube_url("https://youtu.be/dQw4w9WgXcQ")
+    controller = TimerController(PomodoroTimer(CycleConfig.classic()))
+    window = MainWindow(controller, store)
+    qtbot.addWidget(window)
+
+    assert window.youtube_player.url_input.text() == "https://youtu.be/dQw4w9WgXcQ"
+    assert window.youtube_player.content.isHidden() is False

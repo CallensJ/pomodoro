@@ -16,6 +16,7 @@ from src.application.timer_controller import TimerController
 from src.domain.timer_state import Phase, TimerStatus
 from src.infrastructure.settings_store import SettingsStore
 from src.presentation.settings_dialog import SettingsDialog
+from src.presentation.youtube_player import YoutubePlayerWidget
 
 PHASE_LABELS = {
     Phase.FOCUS: "FOCUS",
@@ -48,6 +49,7 @@ class MainWindow(QWidget):
         self._connect_signals()
         self._refresh_all()
         self.set_always_on_top(self.settings_store.always_on_top())
+        self._load_stored_youtube_url()
 
     def _build_ui(self) -> None:
         layout = QVBoxLayout(self)
@@ -61,9 +63,12 @@ class MainWindow(QWidget):
         self.task_input = QLineEdit(objectName="taskInput")
         self.task_input.setPlaceholderText("What are you working on?")
 
+        self.youtube_player = YoutubePlayerWidget()
+
         layout.addLayout(self._build_header_row())
         layout.addWidget(self.time_label)
         layout.addWidget(self.session_label)
+        layout.addWidget(self.youtube_player)
         layout.addStretch()
         layout.addWidget(self.task_input)
         layout.addLayout(self._build_button_row())
@@ -105,6 +110,27 @@ class MainWindow(QWidget):
         self.controller.status_changed.connect(self._update_status)
         self.controller.remaining_changed.connect(self._update_remaining)
         self.controller.session_changed.connect(self._update_session)
+        self.controller.phase_changed.connect(self._sync_player_playback)
+        self.controller.status_changed.connect(self._sync_player_playback)
+
+        self.youtube_player.url_loaded.connect(self.settings_store.set_last_youtube_url)
+        self.youtube_player.collapsed_changed.connect(lambda _: self.adjustSize())
+
+    def _load_stored_youtube_url(self) -> None:
+        stored_url = self.settings_store.last_youtube_url()
+        if stored_url:
+            self.youtube_player.url_input.setText(stored_url)
+            self.youtube_player.load(stored_url)
+
+    def _sync_player_playback(self, *_args) -> None:
+        is_active_focus = (
+            self.controller.phase == Phase.FOCUS
+            and self.controller.status == TimerStatus.RUNNING
+        )
+        if is_active_focus:
+            self.youtube_player.play()
+        else:
+            self.youtube_player.pause()
 
     def _open_settings(self) -> None:
         dialog = SettingsDialog(self.settings_store, self)

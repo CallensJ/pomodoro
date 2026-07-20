@@ -89,3 +89,9 @@ class SettingsStore:
 
     def set_always_on_top(self, enabled: bool) -> None:
         self._settings.setValue("behavior/always_on_top", enabled)
+
+    def last_youtube_url(self) -> str:
+        return str(self._settings.value("youtube/last_url", ""))
+
+    def set_last_youtube_url(self, url: str) -> None:
+        self._settings.setValue("youtube/last_url", url)

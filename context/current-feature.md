@@ -6,7 +6,7 @@ Pomodoro MVP with optional YouTube concentration playlist
 
 ## Status
 
-In Progress — MVP3 (Alarm, Notifications, Settings Persistence) complete, ready for MVP4.
+In Progress — MVP4 (YouTube Concentration Player) complete, ready for MVP5.
 
 ## MVP Roadmap
 
@@ -18,7 +18,7 @@ status only.
 - [x] MVP1 — Domain Timer Core (`feature/domain-timer`)
 - [x] MVP2 — Application Shell + Working Timer UI (`feature/timer-shell`)
 - [x] MVP3 — Alarm, Notifications, Settings Persistence (`feature/alarm-settings`)
-- [ ] MVP4 — YouTube Concentration Player (`feature/youtube-player`)
+- [x] MVP4 — YouTube Concentration Player (`feature/youtube-player`)
 - [ ] MVP5 — Final Verification & Definition of Done (`chore/final-verification`)
 
 ## Goals
@@ -52,14 +52,14 @@ Implement the smallest useful cross-platform desktop application.
 
 ### Priority 4 — YouTube Player
 
-- [ ] Add a field for a YouTube video or playlist URL
-- [ ] Validate and convert supported URLs to official embed URLs
-- [ ] Load the result in a collapsible `QWebEngineView`
-- [ ] Start/resume playback for focus sessions when permitted
-- [ ] Pause playback when the timer pauses or a break starts
-- [ ] Preserve manual player controls
-- [ ] Handle offline, invalid and embedding-disabled cases without crashing
-- [ ] Save the last valid URL
+- [x] Add a field for a YouTube video or playlist URL
+- [x] Validate and convert supported URLs to official embed URLs
+- [x] Load the result in a collapsible `QWebEngineView`
+- [x] Start/resume playback for focus sessions when permitted
+- [x] Pause playback when the timer pauses or a break starts
+- [x] Preserve manual player controls
+- [x] Handle offline, invalid and embedding-disabled cases without crashing
+- [x] Save the last valid URL
 
 ### Priority 5 — Verification
 
@@ -150,3 +150,35 @@ Implement the smallest useful cross-platform desktop application.
   47 automated tests pass (23 new); `ruff check` and `ruff format --check`
   pass. Windows notification path is implemented per documented behavior
   but unverified on real Windows (no Windows environment available here)
+- MVP4 complete: `src/infrastructure/youtube_url.py` (`parse_youtube_url`)
+  parses/validates `youtube.com` (watch, playlist, embed, www/m subdomains)
+  and `youtu.be` URLs with `urllib.parse` (no monolithic regex), rejects
+  host-spoofing attempts (e.g. `youtube.com.evil.com`) and malformed IDs,
+  and normalizes to official `/embed/` URLs — 18 unit tests, no network
+  calls. `src/presentation/youtube_player.py` (`YoutubePlayerWidget`) is a
+  collapsible widget (collapsed by default) hosting a small local HTML
+  page that loads the official YouTube IFrame Player API
+  (`new YT.Player(...)`), giving real `playVideo()`/`pauseVideo()` control
+  and an `onError` handler mapped to friendly messages; a token-guarded
+  ready-check timeout (8s) reports a clear error for offline/never-loads
+  cases without crashing. `MainWindow` wires `play()`/`pause()` to
+  focus-running vs. paused/break states, persists the last valid URL via
+  `SettingsStore.last_youtube_url()`, and restores/loads it on startup.
+  80 automated tests pass in total (33 new); `ruff check` and
+  `ruff format --check` pass.
+  **Environment note:** verified end-to-end against the real app with a
+  real display and real network access (confirmed `youtube.com`/`ytimg.com`
+  reachable). URL parsing, error handling, collapse/expand, settings
+  persistence and play/pause wiring all work correctly, including as
+  observed live in this sandbox. Actual video rendering itself was
+  rejected by YouTube (`Error 152/153: Video player configuration error`)
+  specifically in this sandboxed QtWebEngine (Chromium 134) environment —
+  confirmed independent of app code by testing three approaches (IFrame
+  API wrapper, `origin` playerVar, raw embed URL with a standard desktop
+  User-Agent override), all hitting the same YouTube-side rejection. The
+  app degrades exactly as the spec requires: our own inline error message
+  shows, the timer keeps running, and YouTube's own fallback overlay
+  (with a "Watch video on YouTube" link) remains available inside the
+  frame as a manual fallback. This should be re-verified on a real
+  Linux/Windows desktop outside this sandbox before considering YouTube
+  playback fully confirmed.
