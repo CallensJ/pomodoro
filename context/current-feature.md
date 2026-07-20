@@ -6,7 +6,7 @@ Pomodoro MVP with optional YouTube concentration playlist
 
 ## Status
 
-In Progress — MVP2 (Application Shell + Working Timer UI) complete, ready for MVP3.
+In Progress — MVP3 (Alarm, Notifications, Settings Persistence) complete, ready for MVP4.
 
 ## MVP Roadmap
 
@@ -17,7 +17,7 @@ status only.
 - [x] MVP0 — Project Initialization (`chore/project-init`)
 - [x] MVP1 — Domain Timer Core (`feature/domain-timer`)
 - [x] MVP2 — Application Shell + Working Timer UI (`feature/timer-shell`)
-- [ ] MVP3 — Alarm, Notifications, Settings Persistence (`feature/alarm-settings`)
+- [x] MVP3 — Alarm, Notifications, Settings Persistence (`feature/alarm-settings`)
 - [ ] MVP4 — YouTube Concentration Player (`feature/youtube-player`)
 - [ ] MVP5 — Final Verification & Definition of Done (`chore/final-verification`)
 
@@ -45,10 +45,10 @@ Implement the smallest useful cross-platform desktop application.
 
 ### Priority 3 — Alarm and Settings
 
-- [ ] Play a bundled local alarm when a phase ends
-- [ ] Attempt a desktop notification without blocking the timer
-- [ ] Store durations and preferences with `QSettings`
-- [ ] Add alarm, auto-start and always-on-top options
+- [x] Play a bundled local alarm when a phase ends
+- [x] Attempt a desktop notification without blocking the timer
+- [x] Store durations and preferences with `QSettings`
+- [x] Add alarm, auto-start and always-on-top options
 
 ### Priority 4 — YouTube Player
 
@@ -127,3 +127,26 @@ Implement the smallest useful cross-platform desktop application.
   focus-guard behavior. 24 automated tests (8 new) pass, including
   pytest-qt controller and widget tests; `ruff check` and
   `ruff format --check` pass
+- MVP3 complete: `src/infrastructure/audio_player.py` (`AudioPlayer`, using
+  `QSoundEffect`, plays a locally synthesized `assets/alarm.wav`, no
+  external download); `src/infrastructure/notification_service.py`
+  (`NotificationService`, non-blocking `subprocess.Popen`, `notify-send` on
+  Linux and a PowerShell `NotifyIcon` balloon tip on Windows, best-effort
+  and always caught); `src/infrastructure/settings_store.py`
+  (`SettingsStore`, single `QSettings` wrapper for cycle config, alarm
+  enabled, auto-start-next-phase, always-on-top); `TimerMode` enum added to
+  `domain/timer_state.py`. `TimerController` gained optional
+  `alarm_player`/`notifier`/`settings` collaborators (via small `Protocol`
+  seams, keeping infrastructure out of the application layer) and now
+  fires the alarm/notification only on natural phase completion (never on
+  skip), auto-starts the next phase when enabled, and exposes
+  `apply_new_config()`. `src/presentation/settings_dialog.py`
+  (`SettingsDialog`) edits mode/durations/end action/toggles, validates
+  before accepting, and a "Restore Classic Defaults" action. `MainWindow`
+  gained a settings button and `set_always_on_top()`. Verified by driving
+  the real running app end-to-end (open settings → switch to Custom →
+  edit fields → save → confirm the live window/controller picks up the
+  new 40 min/2-session config and always-on-top flag), with screenshots.
+  47 automated tests pass (23 new); `ruff check` and `ruff format --check`
+  pass. Windows notification path is implemented per documented behavior
+  but unverified on real Windows (no Windows environment available here)

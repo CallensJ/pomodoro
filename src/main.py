@@ -7,7 +7,9 @@ from PySide6.QtWidgets import QApplication
 
 from src.application.timer_controller import TimerController
 from src.domain.timer import PomodoroTimer
-from src.domain.timer_state import CycleConfig
+from src.infrastructure.audio_player import AudioPlayer
+from src.infrastructure.notification_service import NotificationService
+from src.infrastructure.settings_store import SettingsStore
 from src.presentation.main_window import MainWindow
 
 STYLES_PATH = Path(__file__).parent / "presentation" / "styles.qss"
@@ -17,9 +19,15 @@ def main() -> None:
     app = QApplication(sys.argv)
     app.setStyleSheet(STYLES_PATH.read_text())
 
-    timer = PomodoroTimer(CycleConfig.classic())
-    controller = TimerController(timer)
-    window = MainWindow(controller)
+    settings_store = SettingsStore()
+    timer = PomodoroTimer(settings_store.load_cycle_config())
+    controller = TimerController(
+        timer,
+        alarm_player=AudioPlayer(),
+        notifier=NotificationService(),
+        settings=settings_store,
+    )
+    window = MainWindow(controller, settings_store)
     window.show()
 
     sys.exit(app.exec())

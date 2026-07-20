@@ -3,6 +3,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
+    QDialog,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -13,6 +14,8 @@ from PySide6.QtWidgets import (
 
 from src.application.timer_controller import TimerController
 from src.domain.timer_state import Phase, TimerStatus
+from src.infrastructure.settings_store import SettingsStore
+from src.presentation.settings_dialog import SettingsDialog
 
 PHASE_LABELS = {
     Phase.FOCUS: "FOCUS",
@@ -29,10 +32,14 @@ def format_remaining(seconds: float) -> str:
 
 class MainWindow(QWidget):
     def __init__(
-        self, controller: TimerController, parent: QWidget | None = None
+        self,
+        controller: TimerController,
+        settings_store: SettingsStore,
+        parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self.controller = controller
+        self.settings_store = settings_store
         self.setWindowTitle("Focus Timer")
         self.resize(340, 430)
         self.setMinimumSize(300, 400)
@@ -40,6 +47,7 @@ class MainWindow(QWidget):
         self._build_ui()
         self._connect_signals()
         self._refresh_all()
+        self.set_always_on_top(self.settings_store.always_on_top())
 
     def _build_ui(self) -> None:
         layout = QVBoxLayout(self)
@@ -53,7 +61,7 @@ class MainWindow(QWidget):
         self.task_input = QLineEdit(objectName="taskInput")
         self.task_input.setPlaceholderText("What are you working on?")
 
-        layout.addWidget(self.phase_label)
+        layout.addLayout(self._build_header_row())
         layout.addWidget(self.time_label)
         layout.addWidget(self.session_label)
         layout.addStretch()
@@ -61,6 +69,16 @@ class MainWindow(QWidget):
         layout.addLayout(self._build_button_row())
 
         self._build_shortcuts()
+
+    def _build_header_row(self) -> QHBoxLayout:
+        row = QHBoxLayout()
+        self.settings_button = QPushButton("⚙", objectName="settingsButton")
+        self.settings_button.setFixedWidth(32)
+        row.addStretch()
+        row.addWidget(self.phase_label)
+        row.addStretch()
+        row.addWidget(self.settings_button)
+        return row
 
     def _build_button_row(self) -> QHBoxLayout:
         row = QHBoxLayout()
@@ -81,11 +99,36 @@ class MainWindow(QWidget):
         self.start_pause_button.clicked.connect(self.controller.toggle_start_pause)
         self.reset_button.clicked.connect(self.controller.reset)
         self.skip_button.clicked.connect(self.controller.skip)
+        self.settings_button.clicked.connect(self._open_settings)
 
         self.controller.phase_changed.connect(self._update_phase)
         self.controller.status_changed.connect(self._update_status)
         self.controller.remaining_changed.connect(self._update_remaining)
         self.controller.session_changed.connect(self._update_session)
+
+    def _open_settings(self) -> None:
+        dialog = SettingsDialog(self.settings_store, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        self.settings_store.save_cycle_config(
+            dialog.selected_mode(), dialog.selected_config()
+        )
+        self.settings_store.set_alarm_enabled(dialog.alarm_enabled())
+        self.settings_store.set_auto_start_next_phase(dialog.auto_start_next_phase())
+        self.settings_store.set_always_on_top(dialog.always_on_top())
+        self.controller.apply_new_config(dialog.selected_config())
+        self.set_always_on_top(dialog.always_on_top())
+
+    def set_always_on_top(self, enabled: bool) -> None:
+        was_visible = self.isVisible()
+        flags = self.windowFlags()
+        if enabled:
+            flags |= Qt.WindowType.WindowStaysOnTopHint
+        else:
+            flags &= ~Qt.WindowType.WindowStaysOnTopHint
+        self.setWindowFlags(flags)
+        if was_visible:
+            self.show()
 
     def _on_space_shortcut(self) -> None:
         if not self.task_input.hasFocus():

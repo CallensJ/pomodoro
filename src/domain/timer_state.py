@@ -22,6 +22,11 @@ class EndAction(Enum):
     REPEAT = auto()
 
 
+class TimerMode(Enum):
+    CLASSIC = auto()
+    CUSTOM = auto()
+
+
 @dataclass(frozen=True)
 class CycleConfig:
     focus_duration: int
