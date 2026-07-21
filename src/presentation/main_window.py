@@ -110,8 +110,6 @@ class MainWindow(QWidget):
         self.controller.status_changed.connect(self._update_status)
         self.controller.remaining_changed.connect(self._update_remaining)
         self.controller.session_changed.connect(self._update_session)
-        self.controller.phase_changed.connect(self._sync_player_playback)
-        self.controller.status_changed.connect(self._sync_player_playback)
 
         self.music_player.folder_loaded.connect(
             self.settings_store.set_last_music_folder
@@ -122,16 +120,6 @@ class MainWindow(QWidget):
         stored_folder = self.settings_store.last_music_folder()
         if stored_folder:
             self.music_player.load_folder(stored_folder)
-
-    def _sync_player_playback(self, *_args) -> None:
-        is_active_focus = (
-            self.controller.phase == Phase.FOCUS
-            and self.controller.status == TimerStatus.RUNNING
-        )
-        if is_active_focus:
-            self.music_player.play()
-        else:
-            self.music_player.pause()
 
     def _open_settings(self) -> None:
         dialog = SettingsDialog(self.settings_store, self)

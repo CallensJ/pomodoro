@@ -60,8 +60,8 @@ Implement the smallest useful cross-platform desktop application.
 - [x] Let the user choose a local folder as the concentration playlist
 - [x] Scan the folder (non-recursive) for `.mp3` files
 - [x] Play back via a non-blocking OS-native player (not QtMultimedia)
-- [x] Start/resume playback for focus sessions
-- [x] Pause playback when the timer pauses or a break starts
+- [x] Playback is fully manual and independent of the timer (no auto
+      start/pause tied to timer phase or status)
 - [x] Auto-advance on natural track completion (wrapping after the last
       track), plus a manual Next control
 - [x] Preserve manual player controls (collapsible, Play/Pause/Next)
@@ -306,3 +306,20 @@ Implement the smallest useful cross-platform desktop application.
   packaging *source* is tracked, so the build is reproducible via
   `bash packaging/build_deb.sh`). Added top-level `README.md` (didn't
   exist before) covering install and running from source.
+- **Music player decoupled from the timer.** The user reported that
+  starting a focus session auto-started music playback with no way to
+  stop just the music without stopping the timer — `MainWindow` had a
+  `_sync_player_playback` handler wired to both `controller.phase_changed`
+  and `controller.status_changed` that force-called `music_player.play()`/
+  `pause()` on every timer transition, overriding any manual pause. This
+  superseded the original spec's "start on focus, pause on break/pause"
+  behavior with an explicit requirement that the player be 100%
+  independent and optional. Removed `_sync_player_playback` and its
+  signal connections entirely from `src/presentation/main_window.py`;
+  the player now only responds to its own Play/Pause/Next controls,
+  never to timer state. Updated `project-overview.md` and this file's
+  Priority 4 checklist to describe the player as fully manual. Replaced
+  `test_player_plays_when_focus_starts_and_pauses_on_pause` with
+  `test_player_is_independent_of_timer_start_and_pause`, asserting the
+  player receives zero play/pause calls across start/pause/reset. 84
+  automated tests pass; `ruff check` and `ruff format --check` pass.

@@ -52,7 +52,7 @@ def test_main_window_applies_always_on_top_from_settings(qtbot, tmp_path) -> Non
     assert bool(window.windowFlags() & Qt.WindowType.WindowStaysOnTopHint)
 
 
-def test_player_plays_when_focus_starts_and_pauses_on_pause(qtbot, tmp_path) -> None:
+def test_player_is_independent_of_timer_start_and_pause(qtbot, tmp_path) -> None:
     controller = TimerController(PomodoroTimer(CycleConfig.classic()))
     window = MainWindow(controller, make_settings_store(tmp_path))
     qtbot.addWidget(window)
@@ -63,11 +63,11 @@ def test_player_plays_when_focus_starts_and_pauses_on_pause(qtbot, tmp_path) -> 
     window.music_player.pause = lambda: pause_calls.append(True)
 
     controller.start()
-    assert len(play_calls) >= 1
-    assert len(pause_calls) == 0
-
     controller.pause()
-    assert len(pause_calls) >= 1
+    controller.reset()
+
+    assert play_calls == []
+    assert pause_calls == []
 
 
 def test_player_folder_is_persisted_to_settings_on_load(qtbot, tmp_path) -> None:

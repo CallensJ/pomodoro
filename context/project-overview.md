@@ -62,8 +62,8 @@ Classic defaults must always be available through a reset action.
   `QSoundEffect` and `QMediaPlayer` were found to block the calling thread
   for many seconds on some audio backends, which is unacceptable on the UI
   thread
-- Start or resume playback when a focus session starts
-- Pause playback when the timer is paused or a break begins
+- Playback is fully manual and independent of the timer: the timer never
+  starts, stops or pauses the player, and the player never affects the timer
 - A track that finishes naturally advances to the next, wrapping after the
   last track; a manual "Next" control is also available
 - Keep the player optional and collapsible
